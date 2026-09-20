@@ -1,0 +1,866 @@
+<title>STEVE 탈출연구소</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap">
+<style>
+  :root{
+    color-scheme: light;
+    --panel:#ffffff;
+    --panel-2:#faf7ff;
+    --line:#e4d9fb;
+    --text:#3a3364;
+    --muted:#847fae;
+    --accent:#8b5cf6;
+    --accent2:#22b8a0;
+    --pink:#ff8fab;
+    --gold:#f5a524;
+    --danger:#f2545b;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    background:
+      radial-gradient(circle at 12% 18%, rgba(139,92,246,.20), transparent 55%),
+      radial-gradient(circle at 88% 12%, rgba(255,143,171,.22), transparent 55%),
+      radial-gradient(circle at 50% 92%, rgba(34,184,160,.18), transparent 55%),
+      linear-gradient(160deg, #fdf3ff 0%, #eef6ff 55%, #fffbe9 100%);
+    background-attachment: fixed;
+    color:var(--text);
+    font-family:'Noto Sans KR', system-ui, sans-serif;
+    min-height:100%;
+  }
+  #stars{ position:fixed; inset:0; z-index:0; pointer-events:none; }
+  #confetti-layer{ position:fixed; inset:0; z-index:50; pointer-events:none; overflow:hidden; }
+  .wrap{ position:relative; z-index:1; max-width:640px; margin:0 auto; padding: calc(env(safe-area-inset-top,0px) + 18px) 18px calc(env(safe-area-inset-bottom,0px) + 32px); min-height:100%; display:flex; flex-direction:column; gap:16px; }
+  h1,h2,h3{ font-family:'Jua', 'Noto Sans KR', sans-serif; margin:0; text-wrap:balance; letter-spacing:.01em; font-weight:400; }
+  .eyebrow{ font-family:'Space Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); font-weight:700; }
+  .card{ background:var(--panel); border:1px solid var(--line); border-top:8px solid; border-image:linear-gradient(90deg, var(--accent), var(--pink), var(--accent2)) 1; border-radius:30px; padding:24px; box-shadow:0 18px 42px rgba(139,92,246,.20); animation:popIn .4s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes popIn{ 0%{ opacity:0; transform:scale(.93) translateY(8px); } 100%{ opacity:1; transform:scale(1) translateY(0); } }
+  @keyframes floaty{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-5px); } }
+  .muted{ color:var(--muted); }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .between{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  button{ font:inherit; cursor:pointer; }
+  .btn{ appearance:none; border:1px solid var(--line); background:var(--panel-2); color:var(--text); padding:13px 20px; border-radius:999px; font-weight:700; font-size:15px; transition:transform .12s ease, box-shadow .12s ease; }
+  .btn:hover{ transform:translateY(-2px) scale(1.02); box-shadow:0 8px 18px rgba(139,92,246,.22); }
+  .btn:active{ transform:translateY(0) scale(.98); }
+  .btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .btn.primary{ background:linear-gradient(135deg, var(--accent), #b26bff); color:#fff; border-color:transparent; }
+  .btn.gold{ background:linear-gradient(135deg, var(--gold), var(--pink)); color:#3a2400; border-color:transparent; }
+  .btn.ghost{ background:transparent; box-shadow:none; }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
+  .btn-grid{ display:grid; gap:10px; }
+  input[type=text]{ width:100%; font:inherit; font-size:16px; background:var(--panel-2); border:2px solid var(--line); color:var(--text); padding:12px 16px; border-radius:18px; }
+  input[type=text]:focus{ outline:none; border-color:var(--accent); }
+  label{ display:block; font-size:13px; color:var(--muted); margin-bottom:6px; font-weight:700; }
+  .field{ margin-bottom:14px; }
+  .hud{ position:sticky; top:env(safe-area-inset-top,0px); z-index:2; background:rgba(255,255,255,.88); backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:18px; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; gap:10px; box-shadow:0 6px 18px rgba(139,92,246,.12); }
+  .hearts{ display:flex; gap:4px; }
+  .hearts svg{ width:20px; height:20px; }
+  .code-slots{ display:flex; gap:6px; font-family:'Space Mono',monospace; }
+  .slot{ width:28px; height:32px; border:2px solid var(--line); border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:700; background:var(--panel-2); color:#b8720c; }
+  .hearts svg{ animation:floaty 2.4s ease-in-out infinite; }
+  .hearts svg:nth-child(2){ animation-delay:.2s; }
+  .hearts svg:nth-child(3){ animation-delay:.4s; }
+  .slot.empty{ color:var(--muted); }
+  .progress{ height:8px; border-radius:99px; background:var(--panel-2); overflow:hidden; border:1px solid var(--line); }
+  .progress > i{ display:block; height:100%; background:linear-gradient(90deg, var(--accent2), var(--accent), var(--pink)); }
+  .passage{ border-left:4px solid var(--accent2); padding:4px 0 4px 14px; margin:12px 0; background:var(--panel-2); border-radius:0 12px 12px 0; }
+  .passage .en{ font-style:italic; color:var(--text); padding:8px 10px 0; }
+  .passage .ko{ color:var(--muted); margin-top:2px; font-size:14px; padding:0 10px 8px; }
+  .q-badge{ display:inline-block; font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.08em; padding:4px 11px; border-radius:99px; background:rgba(139,92,246,.12); color:var(--accent); border:1px solid rgba(139,92,246,.35); margin-bottom:10px; font-weight:700; }
+  .options{ display:grid; gap:10px; }
+  .opt{ text-align:left; padding:14px 18px; border-radius:18px; border:2px solid var(--line); background:var(--panel-2); color:var(--text); font-size:15px; }
+  .opt:hover{ border-color:var(--accent); }
+  .opt.correct{ border-color:var(--accent2); background:rgba(34,184,160,.14); }
+  .opt.wrong{ border-color:var(--danger); background:rgba(242,84,91,.12); animation:shake .3s; }
+  .shapes{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .shape-card{ background:var(--panel-2); border:2px solid var(--line); border-radius:20px; padding:8px; }
+  .shape-card:hover{ border-color:var(--accent); }
+  .shape-card.wrong{ border-color:var(--danger); animation:shake .3s; }
+  .shape-card.correct{ border-color:var(--accent2); }
+  .feedback{ font-size:14px; font-weight:700; min-height:20px; margin-top:8px; }
+  .feedback.bad{ color:var(--danger); }
+  .feedback.good{ color:var(--accent2); }
+  @keyframes shake{ 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+  .center{ text-align:center; }
+  .stat{ background:var(--panel-2); border:1px solid var(--line); border-radius:14px; padding:12px; text-align:center; }
+  .stat b{ display:block; font-family:'Space Mono',monospace; font-size:20px; color:var(--accent); }
+  .statgrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:14px 0; }
+  footer{ text-align:center; font-size:12px; color:var(--muted); margin-top:auto; padding-top:12px; }
+  a.textlink{ color:var(--accent); word-break:break-all; }
+  [hidden]{ display:none!important; }
+  @media (prefers-reduced-motion: reduce){ *{ animation-duration:.001ms!important; } }
+</style>
+
+<canvas id="stars"></canvas>
+<div id="confetti-layer"></div>
+<div class="wrap">
+  <div id="hud" class="hud" hidden></div>
+  <div id="app"></div>
+  <footer>고등 영어Ⅱ · Lesson 2 "The World of Scientific Discovery" 기반 방탈출 · 시민 과학 연구소</footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ============ Google Form 연동 설정 (선생님/제작자가 채워 넣는 부분) ============
+     구글 설문지를 만든 뒤 "사전 채움 링크 받기"로 얻은 URL에서 아래 값을 그대로 옮겨 적으세요.
+     예: https://docs.google.com/forms/d/e/1FAI.../viewform?entry.111=..&entry.222=..
+  ============================================================================ */
+  /* 탈출 성공한 학생만 이 구글폼(학번/이름)을 제출합니다.
+     제출 시각 = 탈출 시각, 제출했다는 사실 자체가 "탈출 성공"을 의미해요. */
+  var FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSf5MVoA6aU9OXNLhuHDp3pVvQQPC5UCA29O_8PpdEVCXKcpSg/viewform';
+
+  var STORAGE_KEY = 'citsci_escape_v2';
+
+  var ROOMS = [
+    {
+      letter: 'S',
+      title: '1번 관측실 · 과학은 모두의 것',
+      en: '“Science belongs to everyone, and we all have the ability to play a role in the advancement of science.”',
+      ko: '과학은 모두의 것이며, 우리는 모두 과학의 발전에 일조할 수 있는 능력이 있다. (p.41)',
+      challenges: [
+        { type:'ox', badge:'OX 퀴즈', prompt:'이 글에 따르면, 과학은 오직 흰 실험실 가운을 입은 전문가들만 할 수 있는 일이다.', answer:false,
+          explain:'본문은 이런 생각이 "far from the truth(사실과 거리가 멀다)"라고 말해요. 과학은 모두의 것!' },
+        { type:'mc', badge:'영어 단어', prompt:'본문에서 밑줄 친 의미로 쓰인 단어를 고르세요 — "이러한 <b>인식</b>은 사실과 거리가 멀다" (perception)',
+          options:['perception','contribution','advancement','domain'], answerIndex:0,
+          explain:'perception = 인식, 생각. domain은 "영역", advancement는 "발전"이라는 뜻이에요.' },
+        { type:'mc', badge:'내용 유추', prompt:'글쓴이가 글 첫머리에서 "과학자는 흰 가운을 입고 실험만 한다"는 생각을 먼저 언급한 이유로 가장 적절한 것은?',
+          options:['과학자를 더 존경하게 만들려고','흔한 고정관념을 반박하며 글을 시작하려고','실험실 안전 수칙을 설명하려고','과학자의 실수를 지적하려고'], answerIndex:1,
+          explain:'흔히 갖는 생각(고정관념)을 먼저 보여준 뒤 "그러나 이 인식은 사실과 다르다"며 반박하는 구성이에요.' },
+        { type:'oddone', badge:'다른 그림 찾기', prompt:'본문에 나온 "긴 흰 가운(long, white lab coats)"이 <b>아닌</b> 옷을 입은 사람을 찾아 클릭하세요!',
+          icon:'🥼', oddIcon:'🧥', gridSize:9,
+          explain:'다들 흰 가운을 입고 있는데 하나만 다른 옷이었죠? 과학자만 특별한 게 아니라는 이 글의 메시지처럼, 잘 살펴보는 눈이 중요해요.' }
+      ]
+    },
+    {
+      letter: 'T',
+      title: '2번 관측실 · Kevin Schawinski의 고민',
+      en: 'It took Schawinski a whole week to classify just 50,000 galaxies. “But what about the remaining 950,000?”',
+      ko: 'Schawinski가 고작 5만 개의 은하를 분류하는 데 꼬박 일주일이 걸렸다. 그는 남은 95만 개를 어쩌지 고민했다. (p.42)',
+      challenges: [
+        { type:'text', badge:'계산 게임', prompt:'Schawinski는 일주일에 은하 50,000개를 분류할 수 있어요. 100만(1,000,000)개를 전부 분류하려면 몇 주가 걸릴까요? 숫자만 입력하세요.',
+          accept:['20','20주','스무'], explain:'1,000,000 ÷ 50,000 = 20주! 그래서 도움이 꼭 필요했던 거예요.' },
+        { type:'mc', badge:'객관식', prompt:'Kevin Schawinski가 옥스퍼드 대학에서 원래 연구하던 분야는 무엇이었나요?',
+          options:['블랙홀과 은하의 진화','태양계 행성 탐사','인공지능 로봇 개발','해양 생물 분류'], answerIndex:0,
+          explain:'그는 블랙홀과 은하의 진화를 연구하는 젊은 천문학 연구원이었어요.' },
+        { type:'mc', badge:'객관식', prompt:'은하들을 하나하나 개별적으로 보면서 분류해야 했던 이유는 무엇이었나요?',
+          options:['은하들이 전부 똑같이 생겨서','모두 비슷해 보이지만 모양이 조금씩 달라서','컴퓨터로 분류할 수 없어서','옥스퍼드 대학교의 규칙 때문에'], answerIndex:1,
+          explain:'"they all looked similar but were actually shaped slightly differently" — 비슷해 보여도 조금씩 달라서 일일이 봐야 했어요.' }
+      ]
+    },
+    {
+      letter: 'E',
+      title: '3번 관측실 · Galaxy Zoo 그림 분류실',
+      en: 'They were shown an image of a galaxy and asked to click buttons that described its features. Is its shape an oval or a spiral?',
+      ko: '참가자들은 은하 이미지를 보고 그 특징을 설명하는 버튼을 클릭했다. 타원형인가, 나선형인가? (p.43)',
+      challenges: [
+        { type:'image', badge:'그림 활용 게임', prompt:'Galaxy Zoo 참가자가 된 것처럼, 아래 세 은하 중 <b>나선(spiral)</b> 모양의 은하를 클릭하세요.',
+          shapes:['round','oval','spiral'], answerKey:'spiral',
+          explain:'소용돌이치는 팔 모양이 있으면 나선 은하예요. 실제 참가자들도 이렇게 모양을 구분했답니다.' },
+        { type:'text', badge:'주관식', prompt:'퇴근 후 Schawinski가 만나서 고민을 털어놓았던 친구의 이름은? (영어로 입력, 성만 입력해도 정답)',
+          accept:['lintott','chris lintott','christopher lintott'], explain:'Chris Lintott — 그는 인터넷에 도움을 요청해보라고 제안했어요.' },
+        { type:'ox', badge:'OX 퀴즈', prompt:'Galaxy Zoo 웹사이트는 매우 복잡하고 전문적인 디자인으로 만들어져 초보자가 쓰기 어려웠다.', answer:false,
+          explain:'"kept as simple as possible, with a very basic design and an easy-to-use interface" — 최대한 단순하고 사용하기 쉽게 만들었어요.' },
+        { type:'catch', badge:'별 담기 게임', prompt:'Galaxy Zoo 참가자들처럼 부지런히 은하(별)를 관측 바구니에 담아보세요! 마우스(또는 손가락)로 바구니를 움직여요.',
+          target:8, seconds:18,
+          explain:'참가자들이 하나하나 부지런히 분류했던 것처럼, 방금 별을 부지런히 주워 담으셨네요!' }
+      ]
+    },
+    {
+      letter: 'V',
+      title: '4번 관측실 · Zooniverse의 성장',
+      en: 'Shortly after the website was launched, nearly 70,000 classifications were being made per hour.',
+      ko: '웹사이트가 개설된 직후, 시간당 약 7만 건의 분류가 이루어지고 있었다. (p.44)',
+      challenges: [
+        { type:'mc', badge:'계산 게임', prompt:'시간당 약 70,000건이 분류된다면, 하루(24시간) 동안에는 약 몇 건이 분류될까요?',
+          options:['168,000건','700,000건','1,680,000건','16,800,000건'], answerIndex:2,
+          explain:'70,000 × 24 = 1,680,000건! 어마어마한 시민 참여의 힘이죠.' },
+        { type:'mc', badge:'넌센스 퀴즈', prompt:'Q. 블랙홀이 다이어트에 성공한 비결은 무엇일까요?',
+          options:['다 빨아들여서 배가 안 고파서','매일 헬스장에 가서','원래부터 날씬해서','별을 매일 챙겨 먹어서'], answerIndex:0,
+          explain:'블랙홀은 빛까지 빨아들이는 강한 중력을 가지고 있잖아요! (센스 만점 정답)' },
+        { type:'text', badge:'주관식', prompt:'Galaxy Zoo는 2007년 시작된 지 15년 이상이 지나 무엇으로 성장했나요? (영어로 입력)',
+          accept:['zooniverse'], explain:'Zooniverse — 전 세계 약 2백만 명이 참여하는 시민 과학 플랫폼으로 성장했어요.' },
+        { type:'clickorder', badge:'순서 클릭 게임', prompt:'관측 장비의 전원 버튼을 1번부터 순서대로 눌러 가동하세요!', count:6,
+          explain:'모든 장비가 정상 가동되었습니다!' }
+      ]
+    },
+    {
+      letter: 'E',
+      title: '5번 관측실 · 정체불명의 STEVE',
+      en: 'Surprisingly, neither of them had any idea what Steve was… it is now written in all capital letters and stands for “Strong Thermal Emission Velocity Enhancement.”',
+      ko: '놀랍게도 전문가들도 STEVE의 정체를 몰랐다. 이제 그것은 모두 대문자로 쓰이며 특정 문구의 약자가 되었다. (p.45-46)',
+      challenges: [
+        { type:'ox', badge:'OX 퀴즈', prompt:'천문학 교수와 NASA 과학자는 사진을 보자마자 STEVE의 정체를 바로 알아보았다.', answer:false,
+          explain:'놀랍게도 둘 다 전혀 알지 못했어요(neither of them had any idea)! 그래서 새로운 현상으로 밝혀졌죠.' },
+        { type:'mc', badge:'영어 단어', prompt:'대문자로 쓰이는 STEVE는 무엇의 약자일까요?',
+          options:['Strong Thermal Emission Velocity Enhancement','Space Telescope Energy Viewing Experiment','Solar Thermal Electric Vision Effect','Strange Twilight Evening Visual Event'],
+          answerIndex:0, explain:'"속도 증가에 따른 강한 열 방출"이라는 뜻이에요. 원래 이름 Steve를 기려서 그대로 유지했죠.' },
+        { type:'mc', badge:'내용 유추', prompt:'오로라 추적자들이 이 발광 현상을 "Steve"라고 이름 붙인 이유로 가장 적절한 것은?',
+          options:['한 애니메이션 영화에서 낯선 물체에 그 이름을 붙인 장면을 떠올려서','NASA 과학자의 이름을 따서','그리스 신화 속 인물의 이름이라서','발견한 사람의 실제 이름이라서'], answerIndex:0,
+          explain:'등장인물들이 낯선 물체에 Steve라는 이름을 붙이는 애니메이션 영화 장면을 바탕으로 지은 이름이에요.' },
+        { type:'typing', badge:'빠른 타자 게임', prompt:'STEVE를 발견한 순간을 빠르게 기록하세요! 아래 단어를 제한 시간 안에 정확히 입력하세요.',
+          word:'STEVE', seconds:10,
+          explain:'정확하고 빠르게 입력했어요! 이제 다섯 글자를 모두 모았습니다.' }
+      ]
+    }
+  ];
+
+  var FINAL_QUESTION = {
+    prompt:'이 글 전체의 중심 내용으로 가장 적절한 것은 무엇일까요?',
+    options:[
+      '전문가만이 과학 발전에 기여할 수 있다',
+      '평범한 시민들도 시민 과학 프로젝트를 통해 과학 발전에 기여할 수 있다',
+      '은하와 오로라는 인간에게 위험한 자연현상이다',
+      'NASA는 아마추어의 연구 결과를 신뢰하지 않는다'
+    ],
+    answerIndex:1,
+    explain:'Galaxy Zoo와 STEVE 이야기 모두, 평범한 사람들이 과학 발전에 기여한 시민 과학 사례예요.'
+  };
+
+  var TOTAL_LIVES = 3;
+
+  function freshState(){
+    return { screen:'intro', roomIndex:0, challengeIndex:0,
+      lives:TOTAL_LIVES, letters:[], startTime:null, endTime:null, wrongCount:0, failedAt:null, submitted:false };
+  }
+  function loadState(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return null;
+      var s = JSON.parse(raw);
+      if(!s || typeof s !== 'object') return null;
+      return s;
+    }catch(e){ return null; }
+  }
+  function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+  function resetGame(playAgain){
+    state = freshState();
+    if(playAgain){ state.screen = 'room'; state.startTime = Date.now(); }
+    saveState();
+    render();
+  }
+
+  var state = loadState() || freshState();
+
+  /* ---------- helpers ---------- */
+  function el(tag, attrs, children){
+    var e = document.createElement(tag);
+    attrs = attrs || {};
+    Object.keys(attrs).forEach(function(k){
+      if(k === 'html'){ e.innerHTML = attrs[k]; }
+      else if(k === 'class'){ e.className = attrs[k]; }
+      else if(k.indexOf('on') === 0){ e.addEventListener(k.slice(2), attrs[k]); }
+      else { e.setAttribute(k, attrs[k]); }
+    });
+    (children||[]).forEach(function(c){ if(c) e.appendChild(c); });
+    return e;
+  }
+  function text(t){ return document.createTextNode(t); }
+  function normalize(s){ return String(s||'').trim().toLowerCase().replace(/\s+/g,''); }
+  function fmtTime(ms){
+    var s = Math.floor(ms/1000);
+    var m = Math.floor(s/60); s = s % 60;
+    return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+
+  var SHAPES = {
+    round: '<svg viewBox="0 0 100 100"><defs><radialGradient id="gA" cx="35%" cy="32%" r="70%"><stop offset="0%" stop-color="#fff6d9"/><stop offset="55%" stop-color="#ffd166"/><stop offset="100%" stop-color="#5a3d00"/></radialGradient></defs><circle cx="50" cy="50" r="36" fill="url(#gA)"/></svg>',
+    oval: '<svg viewBox="0 0 100 100"><defs><radialGradient id="gB" cx="38%" cy="35%" r="75%"><stop offset="0%" stop-color="#fff6d9"/><stop offset="55%" stop-color="#ffd166"/><stop offset="100%" stop-color="#5a3d00"/></radialGradient></defs><ellipse cx="50" cy="50" rx="42" ry="21" fill="url(#gB)" transform="rotate(-18 50 50)"/></svg>',
+    spiral: '<svg viewBox="0 0 100 100"><defs><radialGradient id="gC" cx="50%" cy="50%" r="55%"><stop offset="0%" stop-color="#fff6d9"/><stop offset="45%" stop-color="#ffd166"/><stop offset="100%" stop-color="#1a1030"/></radialGradient></defs><path d="M50,50 C68,38 85,50 78,68 C72,84 48,84 36,72" stroke="#b98bff" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M50,50 C32,62 15,50 22,32 C28,16 52,16 64,26" stroke="#6fffb0" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="50" cy="50" r="11" fill="url(#gC)"/></svg>'
+  };
+  var SHAPE_LABEL = { round:'둥근 은하', oval:'타원 은하', spiral:'나선 은하' };
+
+  /* ---------- HUD ---------- */
+  function updateHUD(){
+    var hud = document.getElementById('hud');
+    if(state.screen === 'intro'){ hud.hidden = true; return; }
+    hud.hidden = false;
+    hud.innerHTML = '';
+    var heartsWrap = el('div', {class:'hearts'});
+    for(var i=0;i<TOTAL_LIVES;i++){
+      var filled = i < state.lives;
+      heartsWrap.appendChild(el('svg', {viewBox:'0 0 100 90', html:
+        '<path d="M50 85 C10 58 0 28 24 14 C38 6 50 15 50 26 C50 15 62 6 76 14 C100 28 90 58 50 85 Z" fill="'+(filled?'#ff6b6b':'none')+'" stroke="'+(filled?'#ff6b6b':'#3a4576')+'" stroke-width="6"/>'
+      }));
+    }
+    var codeWrap = el('div', {class:'code-slots'});
+    for(var j=0;j<5;j++){
+      var has = state.letters[j];
+      codeWrap.appendChild(el('div', {class:'slot'+(has?'':' empty')}, [text(has || '·')]));
+    }
+    hud.appendChild(el('div', {class:'row'}, [el('span',{class:'eyebrow'},[text('연구소 탈출 진행 중')])]));
+    hud.appendChild(heartsWrap);
+    hud.appendChild(codeWrap);
+  }
+
+  /* ---------- screens ---------- */
+  function render(){
+    var app = document.getElementById('app');
+    app.innerHTML = '';
+    if(state.screen === 'intro') app.appendChild(IntroScreen());
+    else if(state.screen === 'room') app.appendChild(RoomScreen());
+    else if(state.screen === 'final') app.appendChild(FinalScreen());
+    else if(state.screen === 'success') app.appendChild(SuccessScreen());
+    else if(state.screen === 'fail') app.appendChild(FailScreen());
+    updateHUD();
+  }
+
+  function IntroScreen(){
+    var wrap = el('div', {class:'card center'});
+    wrap.appendChild(el('div', {class:'eyebrow'}, [text('CITIZEN SCIENCE LAB · ACCESS TERMINAL')]));
+    wrap.appendChild(el('h1', {}, [text('🔭 은하 연구소 탈출 프로젝트')]));
+    wrap.appendChild(el('p', {class:'muted'}, [text('고등 영어Ⅱ 2과 "The World of Scientific Discovery" 지문을 풀며 5개의 관측실을 통과하고, 마지막 암호를 완성해 연구소를 탈출하세요!')]));
+    var rules = el('div', {class:'passage'}, [
+      el('div', {class:'ko', style:'padding:10px 12px;'}, [text('💜 생명은 3개! 문제를 틀리면 하나씩 줄어들어요. 5개 관측실을 모두 통과하면 최종 암호를 입력하는 관문이 열립니다. 탈출에 성공하든 실패하든, 끝나면 제출 버튼으로 선생님께 결과를 보내주세요.')])
+    ]);
+    wrap.appendChild(rules);
+
+    var startBtn = el('button', {class:'btn primary', style:'width:100%; margin-top:6px;'}, [text('🚀 탐사 시작하기')]);
+    startBtn.addEventListener('click', function(){
+      ensureAudio();
+      state.screen = 'room'; state.roomIndex = 0; state.challengeIndex = 0; state.startTime = Date.now();
+      saveState(); render();
+    });
+    wrap.appendChild(startBtn);
+    return wrap;
+  }
+
+  function ChallengeBody(container, room, ch, onSolved){
+    container.appendChild(el('div', {class:'q-badge'}, [text(ch.badge)]));
+    container.appendChild(el('p', {html: ch.prompt}));
+    var feedback = el('div', {class:'feedback'});
+
+    function wrongAnswer(elToMark){
+      playWrong();
+      state.lives -= 1; state.wrongCount += 1; saveState();
+      if(elToMark){ elToMark.classList.add('wrong'); setTimeout(function(){ elToMark.classList.remove('wrong'); }, 300); }
+      updateHUD();
+      if(state.lives <= 0){
+        state.failedAt = room.title;
+        state.screen = 'fail'; saveState(); render();
+        return true;
+      }
+      feedback.textContent = '❌ 아쉬워요, 다시 시도해보세요! (남은 생명: ' + state.lives + ')';
+      feedback.className = 'feedback bad';
+      return false;
+    }
+    function correctAnswer(){
+      playCorrect();
+      confettiBurst(18, false);
+      feedback.textContent = '✅ 정답! ' + (ch.explain||'');
+      feedback.className = 'feedback good';
+      var goBtn = el('button', {class:'btn primary', style:'margin-top:12px; width:100%;'}, [text('다음으로 →')]);
+      goBtn.addEventListener('click', onSolved);
+      container.appendChild(feedback);
+      container.appendChild(goBtn);
+    }
+
+    if(ch.type === 'ox'){
+      var row = el('div', {class:'options'});
+      ['O (참)','X (거짓)'].forEach(function(label, idx){
+        var isTrueOpt = idx === 0;
+        var b = el('button', {class:'opt'}, [text(label)]);
+        b.addEventListener('click', function(){
+          if(isTrueOpt === ch.answer){ b.classList.add('correct'); Array.from(row.children).forEach(function(x){x.disabled=true;}); correctAnswer(); }
+          else { if(wrongAnswer(b)) return; }
+        });
+        row.appendChild(b);
+      });
+      container.appendChild(row);
+      container.appendChild(feedback);
+    }
+    else if(ch.type === 'mc'){
+      var row2 = el('div', {class:'options'});
+      ch.options.forEach(function(opt, idx){
+        var b = el('button', {class:'opt'}, [text(opt)]);
+        b.addEventListener('click', function(){
+          if(idx === ch.answerIndex){ b.classList.add('correct'); Array.from(row2.children).forEach(function(x){x.disabled=true;}); correctAnswer(); }
+          else { wrongAnswer(b); }
+        });
+        row2.appendChild(b);
+      });
+      container.appendChild(row2);
+      container.appendChild(feedback);
+    }
+    else if(ch.type === 'text'){
+      var inputWrap = el('div', {class:'field', style:'margin-top:10px;'});
+      var input = el('input', {type:'text', placeholder:'정답을 입력하세요'});
+      inputWrap.appendChild(input);
+      container.appendChild(inputWrap);
+      var submitBtn = el('button', {class:'btn primary'}, [text('제출')]);
+      submitBtn.addEventListener('click', function(){
+        var val = normalize(input.value);
+        if(!val) return;
+        var ok = ch.accept.some(function(a){ return normalize(a) === val || val.indexOf(normalize(a)) !== -1; });
+        if(ok){ submitBtn.disabled = true; input.disabled = true; correctAnswer(); }
+        else { wrongAnswer(inputWrap); }
+      });
+      input.addEventListener('keydown', function(e){ if(e.key === 'Enter') submitBtn.click(); });
+      container.appendChild(submitBtn);
+      container.appendChild(feedback);
+    }
+    else if(ch.type === 'image'){
+      var grid = el('div', {class:'shapes'});
+      ch.shapes.forEach(function(key){
+        var card = el('button', {class:'shape-card', html: SHAPES[key], title: SHAPE_LABEL[key]});
+        card.addEventListener('click', function(){
+          if(key === ch.answerKey){ card.classList.add('correct'); Array.from(grid.children).forEach(function(x){x.disabled=true;}); correctAnswer(); }
+          else { wrongAnswer(card); }
+        });
+        grid.appendChild(card);
+      });
+      container.appendChild(grid);
+      container.appendChild(feedback);
+    }
+    else if(ch.type === 'oddone'){
+      var oddGrid = el('div', {class:'shapes', style:'grid-template-columns:repeat(3,1fr);'});
+      var n = ch.gridSize || 9;
+      var oddIdx = Math.floor(Math.random()*n);
+      for(var gi=0; gi<n; gi++){
+        (function(idx){
+          var isOdd = idx === oddIdx;
+          var cell = el('button', {class:'shape-card', style:'font-size:30px; line-height:1; padding:18px 0;'}, [text(isOdd ? ch.oddIcon : ch.icon)]);
+          cell.addEventListener('click', function(){
+            if(isOdd){ cell.classList.add('correct'); Array.from(oddGrid.children).forEach(function(x){x.disabled=true;}); correctAnswer(); }
+            else { wrongAnswer(cell); }
+          });
+          oddGrid.appendChild(cell);
+        })(gi);
+      }
+      container.appendChild(oddGrid);
+      container.appendChild(feedback);
+    }
+    else if(ch.type === 'clickorder'){
+      var count = ch.count || 6;
+      var nums = [];
+      for(var ni=1; ni<=count; ni++) nums.push(ni);
+      for(var si=nums.length-1; si>0; si--){ var sj = Math.floor(Math.random()*(si+1)); var tmp=nums[si]; nums[si]=nums[sj]; nums[sj]=tmp; }
+      var next = 1;
+      var orderGrid = el('div', {class:'shapes', style:'grid-template-columns:repeat(3,1fr);'});
+      nums.forEach(function(num){
+        var cell = el('button', {class:'shape-card', style:"font-size:22px; font-family:'Space Mono',monospace; font-weight:700; padding:16px 0;"}, [text(String(num))]);
+        cell.addEventListener('click', function(){
+          if(num === next){
+            cell.classList.add('correct'); cell.disabled = true;
+            next += 1;
+            if(next > count){ correctAnswer(); }
+          } else {
+            wrongAnswer(cell);
+          }
+        });
+        orderGrid.appendChild(cell);
+      });
+      container.appendChild(orderGrid);
+      container.appendChild(feedback);
+    }
+    else if(ch.type === 'typing'){
+      var totalTime = ch.seconds || 12;
+      var timeLeft = totalTime;
+      var typingTimerId = null;
+      var typingWrap = el('div', {style:'margin-top:10px;'});
+      var wordDisp = el('div', {style:"font-family:'Space Mono',monospace; font-size:30px; font-weight:700; letter-spacing:.15em; text-align:center; color:var(--accent); margin-bottom:10px;"}, [text(ch.word)]);
+      var timerDisp = el('div', {class:'muted', style:'text-align:center; margin-bottom:8px; font-weight:700;'}, [text('⏱ 남은 시간: '+timeLeft+'초')]);
+      var typeInput = el('input', {type:'text', placeholder:'여기에 똑같이 입력하세요', autocomplete:'off'});
+      typingWrap.appendChild(wordDisp);
+      typingWrap.appendChild(timerDisp);
+      typingWrap.appendChild(typeInput);
+      container.appendChild(typingWrap);
+      container.appendChild(feedback);
+      function typingTick(){
+        timeLeft -= 1;
+        timerDisp.textContent = '⏱ 남은 시간: '+timeLeft+'초';
+        if(timeLeft <= 0){
+          clearInterval(typingTimerId);
+          var stopped = wrongAnswer(typingWrap);
+          if(!stopped){
+            timeLeft = totalTime;
+            typeInput.value = '';
+            timerDisp.textContent = '⏱ 남은 시간: '+timeLeft+'초';
+            typingTimerId = setInterval(typingTick, 1000);
+          }
+        }
+      }
+      typingTimerId = setInterval(typingTick, 1000);
+      typeInput.addEventListener('input', function(){
+        if(normalize(typeInput.value) === normalize(ch.word)){
+          clearInterval(typingTimerId);
+          typeInput.disabled = true;
+          correctAnswer();
+        }
+      });
+    }
+    else if(ch.type === 'catch'){
+      var target = ch.target || 8;
+      var totalSeconds = ch.seconds || 18;
+      var caught = 0, timeLeft2 = totalSeconds, finished = false;
+      var area = el('div', {style:'position:relative; height:240px; background:linear-gradient(180deg,#eef6ff,#faf7ff); border:2px solid var(--line); border-radius:20px; overflow:hidden; margin-top:8px; touch-action:none;'});
+      var basket = el('div', {style:'position:absolute; bottom:6px; left:50%; width:56px; height:34px; font-size:34px; line-height:34px; text-align:center; transform:translateX(-50%);'}, [text('🧺')]);
+      area.appendChild(basket);
+      var countLabel = el('b', {}, [text('0')]);
+      var timeLabel = el('b', {}, [text(String(timeLeft2))]);
+      var hud2 = el('div', {class:'row', style:'justify-content:space-between; margin-top:8px; font-weight:700;'}, [
+        el('span', {}, [text('담은 별: '), countLabel, text(' / '+target)]),
+        el('span', {}, [text('⏱ '), timeLabel, text('초')])
+      ]);
+      container.appendChild(area);
+      container.appendChild(hud2);
+      container.appendChild(feedback);
+
+      function setBasketX(clientX){
+        var rect = area.getBoundingClientRect();
+        var x = clientX - rect.left;
+        x = Math.max(28, Math.min(rect.width-28, x));
+        basket.style.left = x + 'px';
+      }
+      function onMove(e){
+        var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        setBasketX(clientX);
+      }
+      area.addEventListener('mousemove', onMove);
+      area.addEventListener('touchmove', onMove, {passive:true});
+
+      var stars = [];
+      var spawnId = setInterval(function(){
+        if(finished) return;
+        var star = document.createElement('div');
+        star.textContent = '⭐';
+        star.style.position = 'absolute';
+        star.style.top = '-24px';
+        var maxX = Math.max(20, area.clientWidth - 20);
+        var sx = 16 + Math.random()*(maxX-32);
+        star.style.left = sx + 'px';
+        star.style.fontSize = '22px';
+        star.style.transition = 'top ' + (1.6+Math.random()*1.0).toFixed(2) + 's linear';
+        area.appendChild(star);
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){ star.style.top = '226px'; }); });
+        stars.push(star);
+      }, 650);
+
+      var checkId = setInterval(function(){
+        if(finished) return;
+        var areaRect = area.getBoundingClientRect();
+        var basketRect = basket.getBoundingClientRect();
+        stars = stars.filter(function(star){
+          var r = star.getBoundingClientRect();
+          var localTop = r.top - areaRect.top;
+          if(localTop >= 190){
+            if(r.left < basketRect.right - 6 && r.right > basketRect.left + 6){
+              caught += 1;
+              countLabel.textContent = String(caught);
+              star.remove();
+              confettiBurst(6, false);
+              if(caught >= target && !finished){
+                finished = true;
+                clearInterval(spawnId); clearInterval(checkId); clearInterval(timeId2);
+                stars.forEach(function(s){ s.remove(); });
+                correctAnswer();
+              }
+              return false;
+            } else if(localTop >= 224){
+              star.remove();
+              return false;
+            }
+          }
+          return true;
+        });
+      }, 100);
+
+      var timeId2 = setInterval(function(){
+        if(finished) return;
+        timeLeft2 -= 1;
+        timeLabel.textContent = String(timeLeft2);
+        if(timeLeft2 <= 0){
+          finished = true;
+          clearInterval(spawnId); clearInterval(checkId); clearInterval(timeId2);
+          stars.forEach(function(s){ s.remove(); });
+          var stopped = wrongAnswer(area);
+          if(!stopped){
+            container.innerHTML = '';
+            ChallengeBody(container, room, ch, onSolved);
+          }
+        }
+      }, 1000);
+    }
+  }
+
+  function RoomScreen(){
+    var room = ROOMS[state.roomIndex];
+    var wrap = el('div');
+    var pct = Math.round(((state.roomIndex) / ROOMS.length) * 100 + (state.challengeIndex/room.challenges.length)*(100/ROOMS.length));
+    wrap.appendChild(el('div', {class:'progress'}, [el('i', {style:'width:'+pct+'%'})]));
+
+    var card = el('div', {class:'card', style:'margin-top:14px;'});
+    card.appendChild(el('div', {class:'eyebrow'}, [text('ROOM ' + (state.roomIndex+1) + ' / ' + ROOMS.length)]));
+    card.appendChild(el('h2', {}, [text(room.title)]));
+    card.appendChild(el('div', {class:'passage'}, [
+      el('div', {class:'en'}, [text(room.en)]),
+      el('div', {class:'ko'}, [text(room.ko)])
+    ]));
+
+    var ch = room.challenges[state.challengeIndex];
+    ChallengeBody(card, room, ch, function(){
+      if(state.challengeIndex < room.challenges.length - 1){
+        state.challengeIndex += 1;
+      } else {
+        state.letters[state.roomIndex] = room.letter;
+        if(state.roomIndex < ROOMS.length - 1){
+          state.roomIndex += 1; state.challengeIndex = 0;
+        } else {
+          state.screen = 'final';
+        }
+      }
+      saveState(); render();
+    });
+
+    wrap.appendChild(card);
+    return wrap;
+  }
+
+  function FinalScreen(){
+    var wrap = el('div', {class:'card'});
+    wrap.appendChild(el('div', {class:'eyebrow'}, [text('FINAL ROOM · 최종 관문')]));
+    wrap.appendChild(el('h2', {}, [text('탈출 코드를 입력하라')]));
+    wrap.appendChild(el('p', {class:'muted'}, [text('지금까지 모은 문자를 순서대로 조합하면 이 현상의 이름이 됩니다.')]));
+
+    var codeDisplay = el('div', {class:'code-slots', style:'justify-content:center; margin:14px 0;'});
+    state.letters.forEach(function(L){ codeDisplay.appendChild(el('div', {class:'slot'}, [text(L)])); });
+    wrap.appendChild(codeDisplay);
+
+    var codeField = el('div', {class:'field'});
+    var codeInput = el('input', {type:'text', placeholder:'다섯 글자 암호 입력'});
+    codeField.appendChild(el('label',{},[text('암호 입력')]));
+    codeField.appendChild(codeInput);
+    wrap.appendChild(codeField);
+    var codeFeedback = el('div', {class:'feedback'});
+    wrap.appendChild(codeFeedback);
+
+    var qBlock = el('div', {style:'margin-top:18px; display:none;'});
+    wrap.appendChild(qBlock);
+
+    var checkBtn = el('button', {class:'btn primary', style:'width:100%;'}, [text('암호 확인')]);
+    checkBtn.addEventListener('click', function(){
+      if(normalize(codeInput.value) === normalize(state.letters.join(''))){
+        codeFeedback.textContent = '🔓 암호가 맞습니다! 마지막 질문에 답하면 문이 열립니다.';
+        codeFeedback.className = 'feedback good';
+        checkBtn.disabled = true; codeInput.disabled = true;
+        qBlock.style.display = 'block';
+        ChallengeBody(qBlock, {title:'최종 관문'}, {
+          type:'mc', badge:'내용 유추', prompt: FINAL_QUESTION.prompt,
+          options: FINAL_QUESTION.options, answerIndex: FINAL_QUESTION.answerIndex, explain: FINAL_QUESTION.explain
+        }, function(){
+          state.endTime = Date.now(); state.screen = 'success'; saveState(); render();
+        });
+      } else {
+        state.lives -= 1; saveState(); updateHUD();
+        if(state.lives <= 0){ state.failedAt = '최종 관문'; state.screen = 'fail'; saveState(); render(); return; }
+        codeFeedback.textContent = '❌ 암호가 틀렸어요. 각 관측실에서 모은 글자를 다시 확인해보세요. (남은 생명: ' + state.lives + ')';
+        codeFeedback.className = 'feedback bad';
+      }
+    });
+    wrap.appendChild(checkBtn);
+    return wrap;
+  }
+
+  function submitRow(){
+    var wrap = el('div', {style:'margin-top:18px;'});
+    var btn = el('button', {class:'btn gold', style:'width:100%;'}, [text('📮 학번·이름 제출하고 탈출 인증하기')]);
+    btn.addEventListener('click', function(){
+      window.open(FORM_URL, '_blank', 'noopener');
+      state.submitted = true; saveState();
+      msg.textContent = '새 탭에서 열린 구글 설문지에 학번·이름을 입력하고 "제출" 버튼을 누르면 탈출이 기록돼요!';
+    });
+    wrap.appendChild(btn);
+    var msg = el('p', {class:'muted', style:'font-size:13px; margin-top:8px;'}, [text(state.submitted ? '제출 창을 다시 열 수 있어요.' : '버튼을 누르면 학번·이름을 적는 제출 창이 새 탭으로 열려요. 제출한 시각이 곧 탈출 순서가 됩니다!')]);
+    wrap.appendChild(msg);
+    return wrap;
+  }
+
+  function SuccessScreen(){
+    playSuccess();
+    confettiBurst(90, true);
+    setTimeout(function(){ confettiBurst(60, true); }, 350);
+    var wrap = el('div', {class:'card center'});
+    wrap.appendChild(el('div', {class:'eyebrow'}, [text('ACCESS GRANTED')]));
+    wrap.appendChild(el('h1', {}, [text('🎉 탈출 성공!')]));
+    wrap.appendChild(el('p', {class:'muted'}, [text('탐사대원님, 시민 과학 연구소를 무사히 탈출했습니다! STEVE처럼, 평범한 사람도 위대한 발견을 할 수 있어요.')]));
+    var stats = el('div', {class:'statgrid'});
+    stats.appendChild(el('div', {class:'stat'}, [el('b',{},[text(fmtTime(state.endTime-state.startTime))]), text('총 소요시간')]));
+    stats.appendChild(el('div', {class:'stat'}, [el('b',{},[text(String(state.wrongCount))]), text('틀린 횟수')]));
+    stats.appendChild(el('div', {class:'stat'}, [el('b',{},[text('STEVE')]), text('완성한 암호')]));
+    wrap.appendChild(stats);
+    wrap.appendChild(submitRow());
+    var again = el('button', {class:'btn ghost', style:'width:100%; margin-top:10px;'}, [text('처음 화면으로')]);
+    again.addEventListener('click', function(){ resetGame(false); });
+    wrap.appendChild(again);
+    return wrap;
+  }
+
+  function FailScreen(){
+    playFail();
+    var wrap = el('div', {class:'card center'});
+    wrap.appendChild(el('div', {class:'eyebrow', style:'color:var(--danger);'}, [text('ACCESS DENIED')]));
+    wrap.appendChild(el('h1', {}, [text('🔒 탈출 실패')]));
+    wrap.appendChild(el('p', {class:'muted'}, [text('탐사대원님, "' + state.failedAt + '"에서 생명을 모두 잃었습니다. 하지만 실패도 과학자의 중요한 과정이에요 — 다시 도전해서 꼭 탈출해보세요!')]));
+    var retry = el('button', {class:'btn primary', style:'width:100%; margin-top:10px;'}, [text('다시 도전하기')]);
+    retry.addEventListener('click', function(){ resetGame(true); });
+    wrap.appendChild(retry);
+    var again = el('button', {class:'btn ghost', style:'width:100%; margin-top:10px;'}, [text('처음 화면으로')]);
+    again.addEventListener('click', function(){ resetGame(false); });
+    wrap.appendChild(again);
+    return wrap;
+  }
+
+  /* ---------- floating pastel bubbles + sparkles ---------- */
+  function initStars(){
+    var canvas = document.getElementById('stars');
+    var ctx = canvas.getContext('2d');
+    var items = [];
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var colors = ['#c9b3ff','#ffc2d6','#9fe8d8','#ffe29a'];
+    function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    function seed(){
+      items = [];
+      var n = Math.min(26, Math.floor((canvas.width*canvas.height)/32000));
+      for(var i=0;i<n;i++){
+        items.push({
+          x:Math.random()*canvas.width, y:Math.random()*canvas.height+canvas.height,
+          r:Math.random()*16+8, c:colors[i%colors.length],
+          speed:Math.random()*0.35+0.12, sway:Math.random()*Math.PI*2, swaySpeed:Math.random()*0.01+0.004,
+          star: Math.random() < 0.35
+        });
+      }
+    }
+    function drawStar(cx, cy, r, color){
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.beginPath();
+      for(var i=0;i<4;i++){
+        ctx.rotate(Math.PI/2);
+        ctx.moveTo(0,0);
+        ctx.quadraticCurveTo(r*0.15, r*0.15, r, 0);
+        ctx.quadraticCurveTo(r*0.15, -r*0.15, 0, 0);
+      }
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.restore();
+    }
+    function draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      items.forEach(function(it){
+        if(!reduced){
+          it.y -= it.speed;
+          it.sway += it.swaySpeed;
+          if(it.y < -30){ it.y = canvas.height + 30; it.x = Math.random()*canvas.width; }
+        }
+        var x = it.x + Math.sin(it.sway)*14;
+        ctx.globalAlpha = 0.5;
+        if(it.star){ drawStar(x, it.y, it.r*0.7, it.c); }
+        else {
+          ctx.beginPath(); ctx.arc(x, it.y, it.r, 0, Math.PI*2);
+          ctx.fillStyle = it.c; ctx.fill();
+        }
+      });
+      ctx.globalAlpha = 1;
+      if(!reduced) requestAnimationFrame(draw); else setTimeout(draw, 4000);
+    }
+    window.addEventListener('resize', function(){ resize(); seed(); });
+    resize(); seed(); draw();
+  }
+
+  /* ---------- confetti ---------- */
+  function confettiBurst(count, big){
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(reduced) return;
+    var layer = document.getElementById('confetti-layer');
+    if(!layer) return;
+    var colors = ['#8b5cf6','#ff8fab','#22b8a0','#f5a524','#7cc7ff','#ffe29a'];
+    for(var i=0;i<count;i++){
+      (function(){
+        var d = document.createElement('div');
+        var size = big ? (7+Math.random()*9) : (5+Math.random()*5);
+        var startX = Math.random()*100;
+        d.style.position = 'absolute';
+        d.style.left = startX + 'vw';
+        d.style.top = '-24px';
+        d.style.width = size+'px';
+        d.style.height = (size*1.3)+'px';
+        d.style.background = colors[Math.floor(Math.random()*colors.length)];
+        d.style.opacity = '0.95';
+        d.style.borderRadius = (Math.random()<0.5?'2px':'50%');
+        d.style.transform = 'translateY(0) rotate(0deg)';
+        var duration = (big ? 2.2 : 1.5) + Math.random()*1.2;
+        var drift = (Math.random()*180-90);
+        d.style.transition = 'transform '+duration+'s cubic-bezier(.25,.65,.35,1), opacity .3s ease '+(duration-0.3)+'s';
+        layer.appendChild(d);
+        requestAnimationFrame(function(){
+          requestAnimationFrame(function(){
+            var fall = (big ? 108 : 100) + Math.random()*10;
+            d.style.transform = 'translateY('+fall+'vh) translateX('+drift+'px) rotate('+(Math.random()*720-360)+'deg)';
+            d.style.opacity = '0';
+          });
+        });
+        setTimeout(function(){ d.remove(); }, duration*1000+400);
+      })();
+    }
+  }
+
+  /* ---------- sound effects (Web Audio, no files needed) ---------- */
+  var AudioCtor = window.AudioContext || window.webkitAudioContext;
+  var actx = null;
+  function ensureAudio(){
+    if(!AudioCtor) return;
+    if(!actx){ try{ actx = new AudioCtor(); }catch(e){ return; } }
+    if(actx.state === 'suspended'){ try{ actx.resume(); }catch(e){} }
+  }
+  function tone(freq, start, dur, type, peak){
+    if(!actx) return;
+    try{
+      var o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'sine';
+      o.frequency.setValueAtTime(freq, actx.currentTime+start);
+      g.gain.setValueAtTime(0.0001, actx.currentTime+start);
+      g.gain.linearRampToValueAtTime(peak||0.2, actx.currentTime+start+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime+start+dur);
+      o.connect(g); g.connect(actx.destination);
+      o.start(actx.currentTime+start); o.stop(actx.currentTime+start+dur+0.05);
+    }catch(e){}
+  }
+  function playCorrect(){ ensureAudio(); tone(880,0,0.12,'sine',0.22); tone(1318.5,0.09,0.18,'sine',0.2); }
+  function playWrong(){ ensureAudio(); tone(210,0,0.2,'sawtooth',0.16); tone(150,0.14,0.26,'sawtooth',0.13); }
+  function playFail(){ ensureAudio(); tone(330,0,0.18,'triangle',0.16); tone(247,0.16,0.18,'triangle',0.15); tone(196,0.32,0.35,'triangle',0.15); }
+  function playSuccess(){
+    ensureAudio();
+    var notes = [523.25,659.25,783.99,1046.5,783.99,1046.5,1318.51];
+    var t = 0;
+    notes.forEach(function(f, i){ tone(f, t, 0.16, i%2===0?'square':'triangle', 0.18); t += 0.115; });
+    if(actx){
+      try{
+        var o = actx.createOscillator(), g = actx.createGain();
+        var startT = actx.currentTime + t + 0.05;
+        o.type = 'sine';
+        o.frequency.setValueAtTime(320, startT);
+        o.frequency.linearRampToValueAtTime(920, startT+0.28);
+        o.frequency.linearRampToValueAtTime(520, startT+0.5);
+        g.gain.setValueAtTime(0.0001, startT);
+        g.gain.linearRampToValueAtTime(0.2, startT+0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, startT+0.56);
+        o.connect(g); g.connect(actx.destination);
+        o.start(startT); o.stop(startT+0.6);
+      }catch(e){}
+    }
+  }
+
+  /* ---------- boot ---------- */
+  function start(){
+    initStars();
+    if(!state.startTime && state.screen === 'room') state.startTime = Date.now();
+    render();
+  }
+  if(window.claude && window.claude.hot){
+    window.claude.hot.ready ? window.claude.hot.ready(start) : start();
+  } else {
+    start();
+  }
+})();
+</script>
